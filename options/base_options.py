@@ -6,7 +6,7 @@ import models
 import data
 
 
-class BaseOptions():
+class BaseOptions:
     """This class defines options used during both training and test time.
 
     It also implements several helper functions such as parsing, printing, and saving the options.
@@ -23,6 +23,7 @@ class BaseOptions():
         parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
         parser.add_argument('--name', type=str, default='experiment_name', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
+        parser.add_argument('--device', type=str, default='cuda', help='cuda or cpu')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. [cycle_gan | pix2pix | test | colorization]')
@@ -38,58 +39,57 @@ class BaseOptions():
         parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
         # dataset parameters
-        parser.add_argument('--dataset_mode', type=str, default='unaligned', help='chooses how datasets are loaded. [unaligned | aligned | single | colorization]')
+        parser.add_argument('--dataset_mode', type=str, default='ct', help='chooses how datasets are loaded. [ct, unaligned | aligned | single | colorization]')
+        parser.add_argument('--Aclass', type=str, default='ARTERIAL')
+        parser.add_argument('--Bclass', type=str, default='NATIVE')
         parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')
         parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
-        parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
-        parser.add_argument('--load_size', type=int, default=286, help='scale images to this size')
-        parser.add_argument('--crop_size', type=int, default=256, help='then crop to this size')
+
+        parser.add_argument('--batch_size', type=int, default=2, help='input batch size')
+        parser.add_argument('--img_size', type=int, default=512, help='scale images to this size')
+        parser.add_argument('--load_size', type=int, default=512, help='scale images to this size')
+        parser.add_argument('--crop_size', type=int, default=512, help='then crop to this size')
         parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
         parser.add_argument('--preprocess', type=str, default='resize_and_crop', help='scaling and cropping of images at load time [resize_and_crop | crop | scale_width | scale_width_and_crop | none]')
         parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data augmentation')
-        parser.add_argument('--display_winsize', type=int, default=256, help='display window size for both visdom and HTML')
+        parser.add_argument('--display_winsize', type=int, default=512, help='display window size for both visdom and HTML')
         # additional parameters
         parser.add_argument('--epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
         parser.add_argument('--load_iter', type=int, default='0', help='which iteration to load? if load_iter > 0, the code will load models by iter_[load_iter]; otherwise, the code will load models by [epoch]')
         parser.add_argument('--verbose', action='store_true', help='if specified, print more debugging information')
         parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{load_size}')
-        # wandb parameters
-        parser.add_argument('--use_wandb', action='store_true', help='if specified, then init wandb logging')
-        parser.add_argument('--wandb_project_name', type=str, default='CycleGAN-and-pix2pix', help='specify wandb project name')
         self.initialized = True
         return parser
 
-    def gather_options(self,args=None):
+    def gather_options(self):
         """Initialize our parser with basic options(only once).
         Add additional model-specific and dataset-specific options.
         These options are defined in the <modify_commandline_options> function
         in model and dataset classes.
         """
-
         if not self.initialized:  # check if it has been initialized
             parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
             parser = self.initialize(parser)
 
-
         # get the basic options
-
-        opt, _ = parser.parse_known_args(args)
+        opt, _ = parser.parse_known_args()
 
         # modify model-related parser options
         model_name = opt.model
+        print(model_name)
         model_option_setter = models.get_option_setter(model_name)
         parser = model_option_setter(parser, self.isTrain)
-        opt, _ = parser.parse_known_args(args)  # parse again with new defaults
+        opt, _ = parser.parse_known_args()  # parse again with new defaults
 
         # modify dataset-related parser options
-        dataset_name = opt.dataset_mode
-        dataset_option_setter = data.get_option_setter(dataset_name)
-        parser = dataset_option_setter(parser, self.isTrain)
+        # dataset_name = opt.dataset_mode
+        # dataset_option_setter = data.get_option_setter(dataset_name)
+        # parser = dataset_option_setter(parser, self.isTrain)
 
         # save and return the parser
         self.parser = parser
-        return parser.parse_args(args)
+        return parser.parse_args()
 
     def print_options(self, opt):
         """Print and save options
