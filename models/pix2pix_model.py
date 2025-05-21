@@ -114,6 +114,7 @@ class Pix2PixModel(BaseModel):
         self.loss_G.backward()
 
     def optimize_parameters(self):
+        self.train()
         self.forward()                   # compute fake images: G(A)
         # update D
         self.set_requires_grad(self.netD, True)  # enable backprop for D
