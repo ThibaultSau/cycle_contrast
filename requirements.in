@@ -1,0 +1,9 @@
+--index-url https://download.pytorch.org/whl/cu126
+--find-links https://download.pytorch.org/whl/torch/
+--find-links https://download.pytorch.org/whl/torchvision/
+torch==2.6.0+cu126
+torchvision==0.21.0
+dominate>=2.4.0
+visdom>=0.1.8.8
+wandb
+pydicom
