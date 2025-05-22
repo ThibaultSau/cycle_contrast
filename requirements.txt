@@ -4,8 +4,15 @@
 #
 #    pip-compile
 #
+--index-url https://download.pytorch.org/whl/cu126
+--extra-index-url https://pypi.org/simple
+--find-links https://download.pytorch.org/whl/torch/
+--find-links https://download.pytorch.org/whl/torchvision/
+
 annotated-types==0.7.0
     # via pydantic
+asttokens==3.0.0
+    # via stack-data
 certifi==2025.4.26
     # via
     #   requests
@@ -14,12 +21,24 @@ charset-normalizer==3.4.2
     # via requests
 click==8.2.1
     # via wandb
+contourpy==1.3.2
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
+decorator==5.2.1
+    # via ipython
 docker-pycreds==0.4.0
     # via wandb
 dominate==2.9.1
     # via -r requirements.in
+exceptiongroup==1.3.0
+    # via ipython
+executing==2.2.0
+    # via stack-data
 filelock==3.18.0
     # via torch
+fonttools==4.58.0
+    # via matplotlib
 fsspec==2025.5.0
     # via torch
 gitdb==4.0.12
@@ -28,14 +47,26 @@ gitpython==3.1.44
     # via wandb
 idna==3.10
     # via requests
+ipython==8.36.0
+    # via -r requirements.in
+jedi==0.19.2
+    # via ipython
 jinja2==3.1.6
     # via torch
 jsonpatch==1.33
     # via visdom
 jsonpointer==3.0.0
     # via jsonpatch
+kiwisolver==1.4.8
+    # via matplotlib
+lightning-utilities==0.14.3
+    # via torchmetrics
 markupsafe==3.0.2
     # via jinja2
+matplotlib==3.10.3
+    # via -r requirements.in
+matplotlib-inline==0.1.7
+    # via ipython
 mpmath==1.3.0
     # via sympy
 networkx==3.4.2
@@ -44,23 +75,50 @@ networkx==3.4.2
     #   visdom
 numpy==2.2.6
     # via
+    #   contourpy
+    #   matplotlib
     #   scipy
+    #   torchmetrics
     #   torchvision
     #   visdom
+packaging==25.0
+    # via
+    #   lightning-utilities
+    #   matplotlib
+    #   torchmetrics
+parso==0.8.4
+    # via jedi
+pexpect==4.9.0
+    # via ipython
 pillow==11.2.1
     # via
+    #   matplotlib
     #   torchvision
     #   visdom
 platformdirs==4.3.8
     # via wandb
+prompt-toolkit==3.0.51
+    # via ipython
 protobuf==6.31.0
     # via wandb
 psutil==7.0.0
     # via wandb
+ptyprocess==0.7.0
+    # via pexpect
+pure-eval==0.2.3
+    # via stack-data
 pydantic==2.11.4
     # via wandb
 pydantic-core==2.33.2
     # via pydantic
+pydicom==3.0.1
+    # via -r requirements.in
+pygments==2.19.1
+    # via ipython
+pyparsing==3.2.3
+    # via matplotlib
+python-dateutil==2.9.0.post0
+    # via matplotlib
 pyyaml==6.0.2
     # via wandb
 requests==2.32.3
@@ -76,21 +134,34 @@ setproctitle==1.3.6
 six==1.17.0
     # via
     #   docker-pycreds
+    #   python-dateutil
     #   visdom
 smmap==5.0.2
     # via gitdb
-sympy==1.14.0
+stack-data==0.6.3
+    # via ipython
+sympy==1.13.1
     # via torch
-torch==2.7.0
+torch==2.6.0+cu126
     # via
     #   -r requirements.in
+    #   torchmetrics
     #   torchvision
-torchvision==0.22.0
+torchmetrics==1.7.1
+    # via -r requirements.in
+torchvision==0.21.0
     # via -r requirements.in
 tornado==6.5
     # via visdom
+traitlets==5.14.3
+    # via
+    #   ipython
+    #   matplotlib-inline
 typing-extensions==4.13.2
     # via
+    #   exceptiongroup
+    #   ipython
+    #   lightning-utilities
     #   pydantic
     #   pydantic-core
     #   torch
@@ -106,6 +177,8 @@ visdom==0.2.4
     # via -r requirements.in
 wandb==0.19.11
     # via -r requirements.in
+wcwidth==0.2.13
+    # via prompt-toolkit
 websocket-client==1.8.0
     # via visdom
 
