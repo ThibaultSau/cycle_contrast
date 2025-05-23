@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
-
+from .conv_transformer import ConvTransformer
 
 ###############################################################################
 # Helper Functions
@@ -41,7 +41,7 @@ def get_scheduler(optimizer, opt):
 
     Parameters:
         optimizer          -- the optimizer of the network
-        opt (option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions．　
+        opt (option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions
                               opt.lr_policy is the name of learning rate policy: linear | step | plateau | cosine
 
     For 'linear', we keep the same learning rate for the first <opt.n_epochs> epochs
@@ -117,7 +117,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[],**kwargs):
     """Create a generator
 
     Parameters:
@@ -147,7 +147,10 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     net = None
     norm_layer = get_norm_layer(norm_type=norm)
 
-    if netG == 'resnet_9blocks':
+    if netG == 'transformer':
+        net = ConvTransformer(input_nc=input_nc, n_downsampling=kwargs["n_downsampling"], depth=kwargs["depth"],
+                             heads=kwargs["heads"], dropout=kwargs["dropout"], ngf=kwargs['ngf_cytran'] )
+    elif netG == 'resnet_9blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
