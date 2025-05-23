@@ -11,3 +11,6 @@ pydicom
 ipython
 matplotlib
 torchmetrics
+markdown_pdf
+itk
+einops
