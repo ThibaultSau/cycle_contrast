@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
         val_opt = deepcopy(opt)
         val_opt.phase = "val"
-        val_opt.dataset_mode="aligned"
+        # val_opt.dataset_mode="aligned"
 
         val_dataset = create_dataset(val_opt)
         val_dataset_size = len(val_dataset)
@@ -283,7 +283,7 @@ if __name__ == '__main__':
                     lambda x : torch.Tensor(x),
                     transforms.Normalize(mean,std),
                     transforms.Resize((256,256)),
-                    lambda x : x.unsqueeze(1).repeat(1,3,1,1),
+                    lambda x : x.unsqueeze(1).repeat(1,opt.input_nc,1,1),
                 ])
 
                 contrast = itk.GetArrayFromImage(contrast)
@@ -291,9 +291,9 @@ if __name__ == '__main__':
                 non_contrast=trf(non_contrast)
                 contrast=trf(contrast)
                 res = generator_model(non_contrast.to("cuda"))
-                save_numpy_array_as_itk((contrast[:,1,:,:].squeeze()*std)+mean,save_volumes_dir/f"{i}_test_contrast.mha")
-                save_numpy_array_as_itk((non_contrast[:,1,:,:].squeeze().detach().cpu()*std)+mean,save_volumes_dir/f"{i}_test_non_contrast.mha")
-                save_numpy_array_as_itk((res[:,1,:,:].squeeze().detach().cpu()*std)+mean,save_volumes_dir/f"{i}_test_reconstructed.mha")
+                save_numpy_array_as_itk((contrast[:,0,:,:].squeeze()*std)+mean,save_volumes_dir/f"{i}_test_contrast.mha")
+                save_numpy_array_as_itk((non_contrast[:,0,:,:].squeeze().detach().cpu()*std)+mean,save_volumes_dir/f"{i}_test_non_contrast.mha")
+                save_numpy_array_as_itk((res[:,0,:,:].squeeze().detach().cpu()*std)+mean,save_volumes_dir/f"{i}_test_reconstructed.mha")
 
                 slice = 4*(contrast.shape[0]//9)
                 save_iter(res[slice,0],non_contrast[slice,0],torch.Tensor(contrast[slice,0]),best_epoch,save_volumes_dir/f"test_{i}.png",title=f"Test patient example slice nb {slice}")
