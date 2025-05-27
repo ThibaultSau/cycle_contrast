@@ -3,7 +3,8 @@
 import pickle
 
 import numpy as np
-import pydicom
+import itk
+from pathlib import Path
 
 from data.base_dataset import BaseDataset
 
@@ -11,38 +12,32 @@ from data.base_dataset import BaseDataset
 class CTDataset(BaseDataset):
     def __init__(self, opt):
         BaseDataset.__init__(self, opt)
+        self.folder = Path(opt.dataroot)
+        self.A = self.folder/"volA"/opt.phase
+        self.B = self.folder/"volB"/opt.phase
+        self.data={"A":[],"B":[]}
+        for file in self.A.iterdir():
+            self.load_data(file)
+        
+    def load_data(self,file):
+        a = itk.GetArrayFromImage(itk.imread(file,itk.SS))
+        b = itk.GetArrayFromImage(itk.imread(str(file).replace("volA","volB"),itk.SS))
+        
+        a+=a.min()
+        a=np.expand_dims(a/a.max(), 1)
+        
+        b+=b.min()
+        b=np.expand_dims(b/b.max(), 1)
+        
+        for i in range(a.shape[0]):
+            self.data["A"].append(a[i])
+            self.data["B"].append(b[i])
+        
 
-        self.raw_data = pickle.load(open(opt.dataroot, "rb"))
-        self.labels = None
-        self.Aclass = opt.Aclass
-        self.Bclass = opt.Bclass
-        self._make_dataset()
 
-    def _make_dataset(self):
-        data = []
-
-        for entity in self.raw_data:
-            if entity in self.Aclass:
-                data += self.raw_data[entity]
-        self.raw_data = data
 
     def __getitem__(self, index):
-        # Image from A
-        A_image = pydicom.dcmread(self.raw_data[index]).pixel_array
-        A_image[A_image < 0] = 0
-        A_image = A_image / 1e3
-        A_image = A_image - 1
-        A_image = np.expand_dims(A_image, 0).astype(np.float)
-
-        # Paired image from B
-        path = self.raw_data[index].replace(self.Aclass, self.Bclass)
-        B_image = pydicom.dcmread(path).pixel_array
-        B_image[B_image < 0] = 0
-        B_image = B_image / 1e3
-        B_image = B_image - 1
-        B_image = np.expand_dims(B_image, 0).astype(np.float)
-
-        return {'A': A_image, 'B': B_image}
+        return {'A': self.data["A"][index], 'B': self.data["B"][index]}
 
     def __len__(self):
-        return len(self.raw_data)
+        return len(self.data["A"])
