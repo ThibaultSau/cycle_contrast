@@ -250,7 +250,7 @@ if __name__ == '__main__':
         # test part
         generator_name = None
         for model in best_models:
-            if "net_G" in model or "net_G_A" in model:
+            if "net_G_A" in model:
                 generator_name = model
         print(f"loading {generator_name}")
         model_dict = torch.load(generator_name)
@@ -274,22 +274,26 @@ if __name__ == '__main__':
 
         with torch.no_grad():
             for i,patient in enumerate((dataset_test_path/"test_volumesA").iterdir()):
-                non_contrast = itk.imread(patient, itk.F)
-                contrast = itk.imread(str(patient).replace("test_volumesA","test_volumesB"), itk.F)
+                non_contrast = itk.imread(patient, itk.SS)
+                contrast = itk.imread(str(patient).replace("test_volumesA","test_volumesB"), itk.SS)
                 
                 non_contrast = itk.GetArrayFromImage(non_contrast)
-                std,mean = np.std(non_contrast),np.mean(non_contrast)
+                # std,mean = np.std(non_contrast),np.mean(non_contrast)
                 trf = transforms.Compose([
                     lambda x : torch.Tensor(x),
-                    transforms.Normalize(mean,std),
-                    transforms.Resize((256,256)),
+                    # transforms.Normalize(mean,std),
+                    # transforms.Resize((256,256)),
                     lambda x : x.unsqueeze(1).repeat(1,opt.input_nc,1,1),
                 ])
 
                 contrast = itk.GetArrayFromImage(contrast)
 
+                contrast-=contrast.min()
+                non_contrast-=non_contrast.min()
+                
                 non_contrast=trf(non_contrast)
                 contrast=trf(contrast)
+                
                 res = generator_model(non_contrast.to("cuda"))
                 save_numpy_array_as_itk((contrast[:,0,:,:].squeeze()*std)+mean,save_volumes_dir/f"{i}_test_contrast.mha")
                 save_numpy_array_as_itk((non_contrast[:,0,:,:].squeeze().detach().cpu()*std)+mean,save_volumes_dir/f"{i}_test_non_contrast.mha")
