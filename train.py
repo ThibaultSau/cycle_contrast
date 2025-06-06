@@ -23,13 +23,20 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
+import os
+import sys
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(dataset)    # get the number of images in the dataset.
     print('The number of training images = %d' % dataset_size)
-
+    with open(os.path.join(opt.checkpoints_dir,opt.name,"arguments.txt"),"w") as f:
+        for arg in vars(opt):
+            f.write(f"{arg} : {getattr(opt, arg)}\n")
+    with open(os.path.join(opt.checkpoints_dir,opt.name,"commmand.txt"),"w") as f:
+        f.write("python ")
+        f.write(" ".join(sys.argv))  
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
