@@ -9,21 +9,26 @@ from pathlib import Path
 from data.base_dataset import BaseDataset
 from tqdm import tqdm
 
+from skimage.transform import resize
 
 class CTDataset(BaseDataset):
     def __init__(self, opt):
         BaseDataset.__init__(self, opt)
+        self.size = opt.load_size
         self.folder = Path(opt.dataroot)
-        self.A = self.folder/"volA"/opt.phase
-        self.B = self.folder/"volB"/opt.phase
+        self.A = self.folder/"A"/opt.phase
+        self.B = self.folder/"B"/opt.phase
         self.data={"A":[],"B":[]}
         for file in tqdm(self.A.iterdir(),desc="preloading dataset"):
             self.load_data(file)
         
     def load_data(self,file):
         a = itk.GetArrayFromImage(itk.imread(file,itk.SS))
-        b = itk.GetArrayFromImage(itk.imread(str(file).replace("volA","volB"),itk.SS))
+        b = itk.GetArrayFromImage(itk.imread(self.B/file.name,itk.SS))
         
+        if self.size is not None:
+            a = resize(a,(a.shape[0],self.size,self.size))
+            b = resize(b,(b.shape[0],self.size,self.size))
         a-=a.min()
         a=np.expand_dims(a/a.max(), 1)
         
