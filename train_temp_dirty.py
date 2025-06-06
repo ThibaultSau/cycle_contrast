@@ -125,7 +125,7 @@ if __name__ == '__main__':
         with open(out_dir/"arguments.txt","w") as f:
             for arg in vars(opt):
                 f.write(f"{arg} : {getattr(opt, arg)}\n")
-        with open(out_dir/"commmand.txt","w") as f:
+        with open(out_dir/"command.txt","w") as f:
             f.write("python ")
             f.write(" ".join(sys.argv))   
 
@@ -184,7 +184,7 @@ if __name__ == '__main__':
             print(f"epoch : {epoch}, best epoch for each metric {np.argmin(val_losses_arr,axis=0)}, best epoch overall {np.argmin(np.mean(val_losses_arr,axis=1))}  ")
             # if epoch > (opt.n_epochs + opt.n_epochs_decay)//2:
             if epoch == np.argmin(np.mean(val_losses_arr,axis=1)):   # cache our latest model every <save_latest_freq> iterations
-                best_models = model.save_networks(f"epoch_{epoch}_avg_metric_{np.mean(val_losses_arr,axis=1)[-1]:.4f}")
+                best_models = model.save_networks(f"epoch_{epoch.zfill(len(str(opt.n_epochs+opt.n_epochs_decay)))}_avg_metric_{np.mean(val_losses_arr,axis=1)[-1]:.4f}")
                 best_epoch = epoch
                 model_saved = True
 
@@ -273,9 +273,10 @@ if __name__ == '__main__':
         save_volumes_dir.mkdir(parents=True,exist_ok=True)
 
         with torch.no_grad():
-            for i,patient in enumerate((dataset_test_path/"test_volumesA").iterdir()):
+            for i,patient in enumerate((dataset_test_path/"A"/"test").iterdir()):
+                path = dataset_test_path/"A"/"test"
                 non_contrast = itk.imread(patient, itk.SS)
-                contrast = itk.imread(str(patient).replace("test_volumesA","test_volumesB"), itk.SS)
+                contrast = itk.imread(str(patient).replace("A","B"), itk.SS)
                 
                 non_contrast = itk.GetArrayFromImage(non_contrast)
                 # std,mean = np.std(non_contrast),np.mean(non_contrast)
