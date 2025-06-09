@@ -184,7 +184,7 @@ if __name__ == '__main__':
             print(f"epoch : {epoch}, best epoch for each metric {np.argmin(val_losses_arr,axis=0)}, best epoch overall {np.argmin(np.mean(val_losses_arr,axis=1))}  ")
             # if epoch > (opt.n_epochs + opt.n_epochs_decay)//2:
             if epoch == np.argmin(np.mean(val_losses_arr,axis=1)):   # cache our latest model every <save_latest_freq> iterations
-                best_models = model.save_networks(f"epoch_{epoch.zfill(len(str(opt.n_epochs+opt.n_epochs_decay)))}_avg_metric_{np.mean(val_losses_arr,axis=1)[-1]:.4f}")
+                best_models = model.save_networks(f"epoch_{str(epoch).zfill(len(str(opt.n_epochs+opt.n_epochs_decay)))}_avg_metric_{np.mean(val_losses_arr,axis=1)[-1]:.4f}")
                 best_epoch = epoch
                 model_saved = True
 
