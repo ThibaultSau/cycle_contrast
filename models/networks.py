@@ -117,7 +117,8 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[],**kwargs):
+def define_G(opt):
+#(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[],**kwargs):
     """Create a generator
 
     Parameters:
@@ -144,26 +145,42 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
 
     The generator has been initialized by <init_net>. It uses RELU for non-linearity.
     """
+    # input_nc=opt.input_nc
+    # output_nc=opt.output_nc
+    # ngf=opt.ngf
+    # netG=opt.netG
+    # norm=opt.norm
+    # use_dropout=not opt.no_dropout
+    # init_type=opt.init_type
+    # init_gain=opt.init_gain
+    # gpu_ids=opt.gpu_ids.gpu_ids
+    # n_downsampling=opt.n_downsampling
+    # depth=opt.depth
+    # heads=opt.heads
+    # dropout=opt.dropout
+    # ngf_cytran=opt.ngf_cytran
+    
     net = None
-    norm_layer = get_norm_layer(norm_type=norm)
+    norm_layer = get_norm_layer(norm_type=opt.norm)
 
-    if netG == 'transformer':
-        net = ConvTransformer(input_nc=input_nc, n_downsampling=kwargs["n_downsampling"], depth=kwargs["depth"],
-                             heads=kwargs["heads"], dropout=kwargs["dropout"], ngf=kwargs['ngf_cytran'] )
-    elif netG == 'resnet_9blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
-    elif netG == 'resnet_6blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
-    elif netG == 'unet_128':
-        net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
-    elif netG == 'unet_256':
-        net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    if opt.netG == 'transformer':
+        net = ConvTransformer(input_nc=opt.input_nc, n_downsampling=opt.n_downsampling, depth=opt.depth,
+                             heads=opt.heads, dropout=opt.dropout, ngf=opt.ngf_cytran )
+    elif opt.netG == 'resnet_9blocks':
+        net = ResnetGenerator(opt.input_nc, opt.output_nc, opt.ngf, norm_layer=norm_layer, use_dropout=opt.use_dropout, n_blocks=9)
+    elif opt.netG == 'resnet_6blocks':
+        net = ResnetGenerator(opt.input_nc, opt.output_nc, opt.ngf, norm_layer=norm_layer, use_dropout=opt.use_dropout, n_blocks=6)
+    elif opt.netG == 'unet_128':
+        net = UnetGenerator(opt.input_nc, opt.output_nc, 7, opt.ngf, norm_layer=norm_layer, use_dropout=opt.use_dropout)
+    elif opt.netG == 'unet_256':
+        net = UnetGenerator(opt.input_nc, opt.output_nc, 8, opt.ngf, norm_layer=norm_layer, use_dropout=opt.use_dropout)
     else:
-        raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
-    return init_net(net, init_type, init_gain, gpu_ids)
+        raise NotImplementedError('Generator model name [%s] is not recognized' % opt.netG)
+    return init_net(net, opt.init_type, opt.init_gain, opt.gpu_ids)
 
 
-def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_D(opt):
+# (input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a discriminator
 
     Parameters:
@@ -193,18 +210,19 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 
     The discriminator has been initialized by <init_net>. It uses Leakly RELU for non-linearity.
     """
+    # opt.input_nc, opt.ndf, opt.netD, opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids
     net = None
-    norm_layer = get_norm_layer(norm_type=norm)
+    norm_layer = get_norm_layer(norm_type=opt.norm)
 
-    if netD == 'basic':  # default PatchGAN classifier
-        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
-    elif netD == 'n_layers':  # more options
-        net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
-    elif netD == 'pixel':     # classify if each pixel is real or fake
-        net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
+    if opt.netD == 'basic':  # default PatchGAN classifier
+        net = NLayerDiscriminator(opt.input_nc, opt.ndf, n_layers=3, norm_layer=norm_layer)
+    elif opt.netD == 'n_layers':  # more options
+        net = NLayerDiscriminator(opt.input_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
+    elif opt.netD == 'pixel':     # classify if each pixel is real or fake
+        net = PixelDiscriminator(opt.input_nc, opt.ndf, norm_layer=norm_layer)
     else:
-        raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
-    return init_net(net, init_type, init_gain, gpu_ids)
+        raise NotImplementedError('Discriminator model name [%s] is not recognized' % opt.netD)
+    return init_net(net, opt.init_type, opt.init_gain, opt.gpu_ids)
 
 
 ##############################################################################
