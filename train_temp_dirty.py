@@ -116,6 +116,7 @@ if __name__ == '__main__':
         val_losses = []
         best_models = None
         best_epoch = None
+        last_saved = 0
 
         model = create_model(opt)      # create a model given opt.model and other options
         model.setup(opt)               # regular setup: load and print networks; create schedulers
@@ -183,16 +184,21 @@ if __name__ == '__main__':
 
             print(f"epoch : {epoch}, best epoch for each metric {np.argmin(val_losses_arr,axis=0)}, best epoch overall {np.argmin(np.mean(val_losses_arr,axis=1))}  ")
             # if epoch > (opt.n_epochs + opt.n_epochs_decay)//2:
-            if epoch == np.argmin(np.mean(val_losses_arr,axis=1)):   # cache our latest model every <save_latest_freq> iterations
+            if epoch == np.argmin(np.mean(val_losses_arr,axis=1)):   
                 best_models = model.save_networks(f"epoch_{str(epoch).zfill(len(str(opt.n_epochs+opt.n_epochs_decay)))}_avg_metric_{np.mean(val_losses_arr,axis=1)[-1]:.4f}")
                 best_epoch = epoch
                 model_saved = True
+                last_saved=epoch
 
-            if epoch in np.argmin(val_losses_arr,axis=0) and not model_saved:   # cache our latest model every <save_latest_freq> iterations
+            if epoch in np.argmin(val_losses_arr,axis=0) and not model_saved:   
                 for x,y in enumerate(np.argmin(val_losses_arr,axis=0)):
                     if y==epoch:
-                        model.save_networks(f"epoch_{epoch}_{type(metrics[x]).__name__}_{val_losses_arr[y,x]:.4f}")
-
+                        model.save_networks(f"epoch_{str(epoch).zfill(len(str(opt.n_epochs+opt.n_epochs_decay)))}_{type(metrics[x]).__name__}_{val_losses_arr[y,x]:.4f}")
+                last_saved=epoch
+                
+            if epoch-last_saved > 20 :
+                model.save_networks(f"epoch_{str(epoch).zfill(len(str(opt.n_epochs+opt.n_epochs_decay)))}_periodic")
+                last_saved = epoch
             
             if epoch%50 == 0 and epoch > 0:
                 for i,metric in enumerate(metrics):
