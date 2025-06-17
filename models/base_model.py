@@ -77,7 +77,7 @@ class BaseModel(ABC):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         pass
     
-    def save_iter(self,epoch,path):
+    def save_iter(self,title,path):
         try :
             test = self.fake_B
             fig,ax = plt.subplots(2,2)
@@ -105,8 +105,10 @@ class BaseModel(ABC):
             
             ax[2].imshow(self.real_B[0,0,:,:])
             ax[2].set_title("Real B")
+        plt.axis('off')
+        fig.title(title)
 
-        plt.imsave(Path(path)/f"iter_{epoch}.png")
+        plt.imsave(path)
 
     def setup(self, opt):
         """Load and print networks; create schedulers
