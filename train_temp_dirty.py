@@ -90,7 +90,11 @@ if __name__ == '__main__':
         out_dir = Path(opt.checkpoints_dir)/opt.name
         if out_dir.is_dir():
             shutil.rmtree(out_dir)
+        summary_path = out_dir/"summary"
+        summary_path.mkdir(parents=True,exist_ok=True)
+        
 
+        
         dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
         dataset_size = len(dataset)    # get the number of images in the dataset.
 
@@ -189,6 +193,7 @@ if __name__ == '__main__':
                 best_epoch = epoch
                 model_saved = True
                 last_saved=epoch
+                model.save_iter(f"epoch {epoch}",summary_path/f"epoch_{epoch}_val.png")
 
             if epoch in np.argmin(val_losses_arr,axis=0) and not model_saved:   
                 for x,y in enumerate(np.argmin(val_losses_arr,axis=0)):
@@ -209,6 +214,7 @@ if __name__ == '__main__':
                     plt.xlabel("epochs")
                     plt.ylabel(f"{type(metric).__name__}")
                     plt.savefig(out_dir/"web"/"images"/f"{type(metric).__name__}_epoch_{epoch}_losses.png")
+                    plt.savefig(summary_path/f"{type(metric).__name__}_epoch_{epoch}_losses.png")
                     plt.close()
                 plt.plot(np.mean(train_losses_arr,axis=1),label=f"train metric")
                 plt.plot(np.mean(val_losses_arr,axis=1),label=f"val metric")
@@ -217,6 +223,7 @@ if __name__ == '__main__':
                 plt.xlabel("epochs")
                 plt.ylabel(f"Metrics average")
                 plt.savefig(out_dir/"web"/"images"/f"avg_epoch_{epoch}_losses.png")
+                plt.savefig(summary_path/f"avg_epoch_{epoch}_losses.png")
                 plt.close()
 
             print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
@@ -243,6 +250,7 @@ if __name__ == '__main__':
             plt.xlabel("epochs")
             plt.ylabel(f"{type(metric).__name__}")
             plt.savefig(out_dir/"web"/"images"/f"{type(metric).__name__}_Final_losses.png")
+            plt.savefig(summary_path/f"{type(metric).__name__}_Final_losses.png")
             plt.close() 
         plt.plot(np.mean(train_losses_arr,axis=1),label=f"train metric")
         plt.plot(np.mean(val_losses_arr,axis=1),label=f"val metric")
@@ -251,6 +259,7 @@ if __name__ == '__main__':
         plt.xlabel("epochs")
         plt.ylabel(f"Metrics average")
         plt.savefig(out_dir/"web"/"images"/f"avg_Final_losses.png")
+        plt.savefig(summary_path/f"avg_Final_losses.png")
         plt.close()
 
         # test part
