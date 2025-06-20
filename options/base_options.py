@@ -36,13 +36,15 @@ class BaseOptions:
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='specify generator architecture [transformer |resnet_9blocks | resnet_6blocks | unet_256 | unet_128]')
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
         parser.add_argument('--norm', type=str, default='instance', help='instance normalization or batch normalization [instance | batch | none]')
+        parser.add_argument('--normG', type=str, default='instance', choices=['instance', 'batch', 'none'], help='instance normalization or batch normalization for G')
+        parser.add_argument('--normD', type=str, default='instance', choices=['instance', 'batch', 'none'], help='instance normalization or batch normalization for D')
         parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal | xavier | kaiming | orthogonal]')
         parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
         parser.add_argument('--no_antialias', action='store_true', help='if specified, use stride=2 convs instead of antialiased-downsampling (sad)')
         parser.add_argument('--no_antialias_up', action='store_true', help='if specified, use [upconv(learned filter)] instead of [upconv(hard-coded [1,3,3,1] filter), conv]')
         # dataset parameters
-        parser.add_argument('--dataset_mode', type=str, default='ct', help='chooses how datasets are loaded. [ct | unaligned | aligned | single | colorization]')
+        parser.add_argument('--dataset_mode', type=str, default='exvivo', help='chooses how datasets are loaded. [exvivo | invivo | unaligned | aligned | single | colorization]')
         parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')
         parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
@@ -55,6 +57,8 @@ class BaseOptions:
         parser.add_argument('--display_winsize', type=int, default=256, help='display window size for both visdom and HTML')
         parser.add_argument('--random_scale_max', type=float, default=3.0,
                             help='(used for single image translation) Randomly scale the image by the specified factor as data augmentation.')
+        parser.add_argument('--min_clip', type=int, default=-300, help='The minimum values to which to clip the Hounsfield units of the scans for preprocessing ')
+        parser.add_argument('--max_clip', type=int, default=300, help='The maximum values to which to clip the Hounsfield units of the scans for preprocessing ')
         # additional parameters
         parser.add_argument('--epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
         parser.add_argument('--load_iter', type=int, default='0', help='which iteration to load? if load_iter > 0, the code will load models by iter_[load_iter]; otherwise, the code will load models by [epoch]')
