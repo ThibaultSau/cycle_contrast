@@ -44,10 +44,38 @@ from torchvision import transforms
 import itk
 import datetime
 import os
+from tqdm import tqdm
 #%%
 from markdown_pdf import MarkdownPdf,Section
-
-
+import pandas
+def increment_experiments(opt):
+    if not os.path.isfile("experiments_history.csv"):
+        file = open("experiments_history.csv","w")
+        args = list(vars(opt).keys())
+        args.insert(1,args.pop(args.index("name")))
+        args.insert(2,args.pop(args.index("model")))
+        args.insert(3,args.pop(args.index("netG")))
+        args.insert(4,args.pop(args.index("dataset_mode")))
+        args.insert(5,args.pop(args.index("batch_size")))
+        args.insert(6,args.pop(args.index("n_epochs")))
+        args.insert(7,args.pop(args.index("load_size")))
+        file.write("experiment date,")
+        file.write(",".join(args))
+        file.write("\n")
+        
+        vars_dict = vars(opt)
+        file.write(datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
+        file.write(",")
+        file.write(",".join(str(vars_dict[arg]) for arg in args))
+        file.close()
+    else :
+        df = pandas.read_csv("experiments_history.csv")     
+        vars_dict = vars(opt)
+        vars_dict["experiment date"] = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        df2 = pandas.DataFrame(vars_dict)
+        pandas.concat([df,df2],join='outer').to_csv("experiments_history.csv")
+        
+        
 def save_iter(res,non_contrast,contrast,epoch,save_path,is_3d=False,i=0,title=None):
     fig,ax = plt.subplots(1,3)
 
@@ -69,12 +97,24 @@ def save_numpy_array_as_itk(array,path):
     itk_image = itk.GetImageFromArray(array)
     itk.imwrite(itk_image,path)
 
-
+def volume_split(volume,split):
+    for i in range(int(np.ceil(volume.shape[0] / split))):
+        if i*split>volume.shape[0]:
+            yield volume[i*split:]
+        else :
+            yield volume[i*split:(i+1)*split]
+            
 class SSIM_inverted:
     def __init__(self):
         self.metric = StructuralSimilarityIndexMeasure().to("cuda")
     def __call__(self,input,label):
         return 1-self.metric(input,label)
+
+class SSIM:
+    def __init__(self):
+        self.metric = StructuralSimilarityIndexMeasure().to("cuda")
+    def __call__(self,input,label):
+        return self.metric(input,label)
 
 
 class PSNR_normalized:
@@ -83,6 +123,23 @@ class PSNR_normalized:
     def __call__(self,input,label):
         return 1-(self.metric(input,label)/50)
 
+class PSNR:
+    def __init__(self):
+        self.metric = PeakSignalNoiseRatio().to("cuda")
+    def __call__(self,input,label):
+        return self.metric(input,label)
+    
+class MAE:
+    def __init__(self):
+        self.metric = nn.L1Loss()
+    def __call__(self,input,label):
+        return self.metric(input,label)
+
+class MSE:
+    def __init__(self):
+        self.metric = nn.MSELoss()
+    def __call__(self,input,label):
+        return self.metric(input,label)
 
 if __name__ == '__main__':
     try :    
@@ -97,8 +154,6 @@ if __name__ == '__main__':
         
         dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
         dataset_size = len(dataset)    # get the number of images in the dataset.
-
-
 
         print('The number of training images = %d' % dataset_size)
 
@@ -150,7 +205,11 @@ if __name__ == '__main__':
 
                 total_iters += opt.batch_size
                 epoch_iter += opt.batch_size
-                model.set_input(data)         # unpack data from dataset and apply preprocessing
+                if opt.model.lower() == "cut" and epoch == opt.epoch_count and i == 0:
+                    model.data_dependent_initialize(data)
+                    model.setup(opt)               # regular setup: load and print networks; create schedulers
+                
+                model.set_input(data)
                 model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
                 with torch.no_grad():
@@ -235,13 +294,23 @@ if __name__ == '__main__':
             f.write(" ".join(sys.argv))   
 
     finally :
+        increment_experiments(opt)
         print("training finished, saving latest model")
         if best_models is None:
             best_epoch = epoch
             best_models = model.save_networks('latest')
         else :
             model.save_networks('latest')
-
+            
+        with open(out_dir/"train_metrics.txt","w") as f:
+            for i, metric in enumerate(metrics):
+                f.write(f"{type(metric).__name__} : {train_losses_arr.T[i]}")
+                f.write("\n")
+        with open(out_dir/"val_metrics.txt","w") as f:
+            for i, metric in enumerate(metrics):
+                f.write(f"{type(metric).__name__} : {val_losses_arr.T[i]}")
+                f.write("\n")
+                
         for i,metric in enumerate(metrics):
             plt.plot(train_losses_arr.T[i],label=f"train loss")
             plt.plot(val_losses_arr.T[i],label=f"val loss")
@@ -275,9 +344,9 @@ if __name__ == '__main__':
             new_dict["module." + k] = v
 
         # make sure you pass the correct parameters to the define_G method
-        generator_model = define_G(input_nc=opt.input_nc, output_nc=opt.output_nc, ngf=opt.ngf, netG=opt.netG, norm=opt.norm,
-                                        use_dropout=not opt.no_dropout, init_type=opt.init_type, init_gain=opt.init_gain, gpu_ids=opt.gpu_ids,
-                                        n_downsampling=opt.n_downsampling, depth=opt.depth,heads=opt.heads, dropout=opt.dropout, ngf_cytran=opt.ngf_cytran)
+        generator_model = define_G(opt)#input_nc=opt.input_nc, output_nc=opt.output_nc, ngf=opt.ngf, netG=opt.netG, norm=opt.norm,
+                                        #use_dropout=not opt.no_dropout, init_type=opt.init_type, init_gain=opt.init_gain, gpu_ids=opt.gpu_ids,
+                                        #n_downsampling=opt.n_downsampling, depth=opt.depth,heads=opt.heads, dropout=opt.dropout, ngf_cytran=opt.ngf_cytran)
         generator_model.load_state_dict(new_dict)
         generator_model.eval()
         generator_model.to("cuda")
@@ -286,39 +355,47 @@ if __name__ == '__main__':
         dataset_test_path = Path(opt.dataroot)
         save_volumes_dir = out_dir/"volumes"
         save_volumes_dir.mkdir(parents=True,exist_ok=True)
+        
+        test_metrics = [MAE(), MSE(), SSIM(), PSNR()]
+        test_metrics_values = []
+        trf = transforms.Compose([
+            lambda x : torch.Tensor(x),
+            lambda x : x.unsqueeze(1).repeat(1,opt.input_nc,1,1),
+        ])
 
         with torch.no_grad():
             for i,patient in enumerate((dataset_test_path/"A"/"test").iterdir()):
                 path = dataset_test_path/"A"/"test"
                 non_contrast = itk.imread(patient, itk.SS)
-                contrast = itk.imread(str(patient).replace("A","B"), itk.SS)
-                
+                contrast = itk.imread(str(patient).replace("A","B"), itk.SS)                
                 non_contrast = itk.GetArrayFromImage(non_contrast)
-                # std,mean = np.std(non_contrast),np.mean(non_contrast)
-                trf = transforms.Compose([
-                    lambda x : torch.Tensor(x),
-                    # transforms.Normalize(mean,std),
-                    # transforms.Resize((256,256)),
-                    lambda x : x.unsqueeze(1).repeat(1,opt.input_nc,1,1),
-                ])
-
                 contrast = itk.GetArrayFromImage(contrast)
 
-                contrast-=contrast.min()
-                non_contrast-=non_contrast.min()
+                non_contrast = dataset.dataset.normalize(non_contrast)
+                contrast = dataset.dataset.clip(contrast)
                 
                 non_contrast=trf(non_contrast)
                 contrast=trf(contrast)
+                res = []
                 
-                res = generator_model(non_contrast.to("cuda"))
-                save_numpy_array_as_itk((contrast[:,0,:,:].squeeze()*std)+mean,save_volumes_dir/f"{i}_test_contrast.mha")
-                save_numpy_array_as_itk((non_contrast[:,0,:,:].squeeze().detach().cpu()*std)+mean,save_volumes_dir/f"{i}_test_non_contrast.mha")
-                save_numpy_array_as_itk((res[:,0,:,:].squeeze().detach().cpu()*std)+mean,save_volumes_dir/f"{i}_test_reconstructed.mha")
-
+                for vol in tqdm(volume_split(non_contrast,20)):
+                    res.append(generator_model(vol.to("cuda")).cpu())
+                res = torch.cat(res)
+                
+                print("non_contrast",non_contrast.shape)
+                print("res",res.shape)
+                
                 slice = 4*(contrast.shape[0]//9)
-                save_iter(res[slice,0],non_contrast[slice,0],torch.Tensor(contrast[slice,0]),best_epoch,save_volumes_dir/f"test_{i}.png",title=f"Test patient example slice nb {slice}")
+                save_iter(res[slice,0],non_contrast[slice,0],contrast[slice,0],best_epoch,save_volumes_dir/f"test_{i}.png",title=f"Test patient example slice nb {slice}")
 
+                non_contrast = dataset.dataset.unnormalize(contrast[:,0,:,:].squeeze().cpu().numpy())
+                save_numpy_array_as_itk(non_contrast,save_volumes_dir/f"{i}_test_non_contrast.mha")
+                res = dataset.dataset.unnormalize(res[:,0,:,:].squeeze().cpu().numpy())
+                save_numpy_array_as_itk(res,save_volumes_dir/f"{i}_test_reconstructed.mha")
+                save_numpy_array_as_itk(contrast[:,0,:,:].squeeze(),save_volumes_dir/f"{i}_test_contrast.mha")
 
+                test_metrics_values.append([metric(res,contrast) for metric in test_metrics])
+        test_metrics_avg = np.mean(test_metrics_values,axis=1)
 
 
 
@@ -328,18 +405,26 @@ if __name__ == '__main__':
         text.append(datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
         text.append("\n")
         text.append(f"This experiment trains a {opt.model} network on each CT slice of a non contrast scan and tries to recreate the matching contrast scan.\n")
+        text.append(f"This experiment uses a {opt.netG} model as generator\n")
+        text.append(f"Scans Hounsfield units are clipped between {opt.min_clip} and {opt.max_clip} during preprocessing\n")
+        text.append(f"This experiment uses {opt.dataset_mode} data with a batch size of {opt.batch_size} images for {opt.n_epochs+opt.n_epochs_decay} epochs with an initial lr of {opt.lr} \n")
         text.append("\n")
-        text.append(f"New : Denormalize images to export them in the expected ranges.\n")
-        text.append("\n")
-        text.append("TODO Generate volume metadata properly.\n")
-        text.append("TODO Export volume in it's original shape.")
+        text.append("TODO : Generate volume metadata properly.\n")
         text.append("\n")
         text.append("\n")
         text.append("## Data setup\n")
         text.append(f" got {len(dataset)} images in training, {len(val_dataset)} images in validation \n")
-        text.append("## Results\n")
+        try :
+            with open(os.path.join(opt.dataroot,"split.txt"),'r') as f:
+                split = f.readlines()
+            text.append(f"Patient split is as follow :\n")
+            text.append("".join(split).replace(",", "as").replace("\n",", "))
+            text.append("\n")
+        except:
+            pass
+        text.append("## Training metrics\n")
         text.append("\n")
-        text.append('Training and validation performances are a logged with L1, L2 and SSIM metrics.\n')
+        text.append('Training and validation performances are a logged with L1, L2, SSIM and PSNR metrics.\n')
         text.append("\n")
         for i,metric in enumerate(metrics):
             text.append("\n")
@@ -352,7 +437,22 @@ if __name__ == '__main__':
 
         text.append("\n")
         text.append("\n")
-        text.append("Test results\n")
+        text.append("##Test results\n")
+        text.append("###Metrics\n")
+
+        text.append("| ")
+        text.append(" | ".join([type(metric).__name__ for metric in metrics]))
+        text.append(" |\n")
+
+        text.append("| ")
+        text.append(" | ".join(["---" for _ in range(len(metrics))]))
+        text.append(" |\n")
+        
+        text.append("| ")
+        text.append(" | ".join([np.around(metric,5) for metric in test_metrics_avg]))
+        text.append(" |\n")
+            
+        text.append("###Qualitative results\n")
         for i in range(len(os.listdir(dataset_test_path/"test_volumesA"))):
             text.append("\n")
             text.append(f"![image]( { save_volumes_dir/f'test_{i}.png' } )")
