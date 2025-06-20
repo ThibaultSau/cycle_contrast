@@ -74,9 +74,7 @@ class CycleGANModel(BaseModel):
         #(self, input_nc, n_downsampling, depth, heads, proj_kernel=3,mlp_mult=4, dropout=0., ngf=16)
         #ConvTransformer(input_nc=opt.input_nc, n_downsampling=opt.n_downsampling, depth=opt.depth,heads=opt.heads, dropout=opt.dropout, ngf=opt.ngf_cytran)
         self.netG_A = networks.define_G(opt)
-        self.netG_B = networks.define_G(input_nc=opt.input_nc, output_nc=opt.output_nc, ngf=opt.ngf, netG=opt.netG, norm=opt.norm,
-                                        use_dropout=not opt.no_dropout, init_type=opt.init_type, init_gain=opt.init_gain, gpu_ids=self.gpu_ids,
-                                        n_downsampling=opt.n_downsampling, depth=opt.depth,heads=opt.heads, dropout=opt.dropout, ngf_cytran=opt.ngf_cytran)
+        self.netG_B = networks.define_G(opt)
         # old way : self.netG_B = networks.define_G(input_nc=opt.input_nc, output_nc=opt.output_nc, ngf=opt.ngf, netG=opt.netG, norm=opt.norm,
                                         # use_dropout=not opt.no_dropout, init_type=opt.init_type, init_gain=opt.init_gain, gpu_ids=self.gpu_ids,
                                         # n_downsampling=opt.n_downsampling, depth=opt.depth,heads=opt.heads, dropout=opt.dropout, ngf_cytran=opt.ngf_cytran)
