@@ -82,33 +82,42 @@ class BaseModel(ABC):
             test = self.fake_B
             fig,ax = plt.subplots(2,2)
             
-            ax[1][0].imshow(self.fake_B[0,0,:,:])
-            ax[1][0].set_title("Fake B")
+            plt.axis('off')
+            ax[0][1].imshow(self.fake_B[0,0,:,:].cpu().numpy(),cmap='gray')
+            ax[0][1].set_title("Fake B")
             
-            ax[1][1].imshow(self.fake_A[0,0,:,:])
+            plt.axis('off')
+            ax[1][1].imshow(self.fake_A[0,0,:,:].cpu().numpy(),cmap='gray')
             ax[1][1].set_title("Fake A")
             
-            ax[0][0].imshow(self.real_A[0,0,:,:])
+            plt.axis('off')
+            ax[0][0].imshow(self.real_A[0,0,:,:].cpu().numpy(),cmap='gray')
             ax[0][0].set_title("Real A")
             
-            ax[0][1].imshow(self.real_B[0,0,:,:])
-            ax[0][1].set_title("Real B")
+            plt.axis('off')
+            ax[1][0].imshow(self.real_B[0,0,:,:].cpu().numpy(),cmap='gray')
+            ax[1][0].set_title("Real B")
 
         except:
             fig,ax = plt.subplots(1,3)
             
-            ax[0].imshow(self.real_A[0,0,:,:])
+            plt.axis('off')
+            ax[0].imshow(self.real_A[0,0,:,:].cpu().numpy(),cmap='gray')
             ax[0].set_title("Real A")
             
-            ax[1].imshow(self.fake_A[0,0,:,:])
+            plt.axis('off')
+            ax[1].imshow(self.fake_A[0,0,:,:].cpu().numpy(),cmap='gray')
             ax[1].set_title("Fake A")
             
-            ax[2].imshow(self.real_B[0,0,:,:])
+            plt.axis('off')
+            ax[2].imshow(self.real_B[0,0,:,:].cpu().numpy(),cmap='gray')
             ax[2].set_title("Real B")
+        
         plt.axis('off')
-        fig.title(title)
+        fig.suptitle(title)
 
-        plt.imsave(path)
+        plt.savefig(path,bbox_inches='tight')
+        plt.close()
 
     def setup(self, opt):
         """Load and print networks; create schedulers
