@@ -266,6 +266,7 @@ if __name__ == '__main__':
             
             if epoch%50 == 0 and epoch > 0:
                 for i,metric in enumerate(metrics):
+                    plt.close()
                     plt.plot(train_losses_arr.T[i],label=f"train metric")
                     plt.plot(val_losses_arr.T[i],label=f"val metric")
                     plt.legend()
@@ -275,6 +276,7 @@ if __name__ == '__main__':
                     plt.savefig(out_dir/"web"/"images"/f"{type(metric).__name__}_epoch_{epoch}_losses.png")
                     plt.savefig(summary_path/f"{type(metric).__name__}_epoch_{epoch}_losses.png")
                     plt.close()
+                plt.close()
                 plt.plot(np.mean(train_losses_arr,axis=1),label=f"train metric")
                 plt.plot(np.mean(val_losses_arr,axis=1),label=f"val metric")
                 plt.legend()
@@ -312,6 +314,7 @@ if __name__ == '__main__':
                 f.write("\n")
                 
         for i,metric in enumerate(metrics):
+            plt.close()
             plt.plot(train_losses_arr.T[i],label=f"train loss")
             plt.plot(val_losses_arr.T[i],label=f"val loss")
             plt.legend()
@@ -321,6 +324,7 @@ if __name__ == '__main__':
             plt.savefig(out_dir/"web"/"images"/f"{type(metric).__name__}_Final_losses.png")
             plt.savefig(summary_path/f"{type(metric).__name__}_Final_losses.png")
             plt.close() 
+        plt.close()
         plt.plot(np.mean(train_losses_arr,axis=1),label=f"train metric")
         plt.plot(np.mean(val_losses_arr,axis=1),label=f"val metric")
         plt.legend()
