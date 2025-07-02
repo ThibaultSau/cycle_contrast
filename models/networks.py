@@ -322,9 +322,15 @@ def define_D(opt):
     norm_layer = get_norm_layer(norm_type=opt.norm)
 
     if opt.netD == 'basic':  # default PatchGAN classifier
-        net = NLayerDiscriminator(opt.input_nc, opt.ndf, n_layers=3, norm_layer=norm_layer)
+        if opt.model== "pix2pix":
+            net = NLayerDiscriminator(opt.input_nc+opt.output_nc, opt.ndf, n_layers=3, norm_layer=norm_layer)
+        else :
+            net = NLayerDiscriminator(opt.input_nc, opt.ndf, n_layers=3, norm_layer=norm_layer)
     elif opt.netD == 'n_layers':  # more options
-        net = NLayerDiscriminator(opt.input_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
+        if opt.model== "pix2pix":
+            net = NLayerDiscriminator(opt.input_nc+opt.output_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
+        else :
+            net = NLayerDiscriminator(opt.input_nc, opt.ndf, opt.n_layers_D, norm_layer=norm_layer)
     elif opt.netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(opt.input_nc, opt.ndf, norm_layer=norm_layer)
     else:
