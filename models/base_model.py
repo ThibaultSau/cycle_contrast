@@ -106,7 +106,7 @@ class BaseModel(ABC):
             ax[0].set_title("Real A")
             
             plt.axis('off')
-            ax[1].imshow(self.fake_A[0,0,:,:].cpu().numpy(),cmap='gray')
+            ax[1].imshow(self.fake_B[0,0,:,:].cpu().numpy(),cmap='gray')
             ax[1].set_title("Fake A")
             
             plt.axis('off')
